@@ -6,15 +6,18 @@ import {
   SidebarMenuItem,
 } from "@aws-ticket/ui/sidebar";
 import type { Icon } from "@tabler/icons-react";
-
+import { UseNavigateResult } from "@tanstack/react-router"
 export function NavMain({
   items,
+  navigateFn
 }: {
   items: Array<{
     title: string;
     url: string;
     icon?: Icon;
   }>;
+  navigateFn: UseNavigateResult<string>;
+
 }) {
   return (
     <SidebarGroup>
@@ -24,7 +27,7 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
                 className="cursor-pointer"
-                // onClick={() => navigate({ to: item.url })}
+                onClick={() => navigateFn({ to: item.url })}
                 tooltip={item.title}
               >
                 {item.icon && <item.icon />}

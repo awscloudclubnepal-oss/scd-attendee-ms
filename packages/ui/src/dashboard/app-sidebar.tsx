@@ -11,9 +11,11 @@ import {
 } from "@aws-ticket/ui/sidebar";
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
+import { UseNavigateResult } from "@tanstack/react-router";
 
 export function AppSidebar({
   data,
+  navigateFn,
   ...props
 }: {
   data: {
@@ -28,6 +30,7 @@ export function AppSidebar({
       icon: Icon;
     }>;
   };
+  navigateFn: UseNavigateResult<string>;
 } & React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -49,7 +52,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent className="mt-4">
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain} navigateFn={navigateFn} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={data.user} />

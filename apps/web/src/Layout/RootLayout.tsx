@@ -1,4 +1,4 @@
-import { Outlet } from '@tanstack/react-router'
+import { Outlet, useNavigate } from '@tanstack/react-router'
 import { AppSidebar } from '@aws-ticket/ui/dashboard/app-sidebar'
 import {
   SidebarInset,
@@ -43,10 +43,10 @@ export function RootLayout() {
       },
     ],
   }
-
+  const navigate = useNavigate()
   return (
     <SidebarProvider>
-      <AppSidebar data={data} />
+      <AppSidebar data={data} navigateFn={navigate} />
       <SidebarInset>
         <header className="flex h-16 shrink-0 border-b items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">
