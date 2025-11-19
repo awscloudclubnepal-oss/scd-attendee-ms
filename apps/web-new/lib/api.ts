@@ -75,7 +75,7 @@ export const apiClient = {
     },
   },
   
-  // Attendees endpoints (placeholder for future use)
+  // Attendees endpoints
   attendees: {
     getAll: async () => {
       const response = await axiosInstance.get('/attendees');
@@ -94,6 +94,23 @@ export const apiClient = {
     
     isCheckedIn: async (id: number) => {
       const response = await axiosInstance.get(`/attendees/ischeckedin/${id}`);
+      return response.data;
+    },
+    
+    updateLunch: async (userId: number, lunchId: 1 | 2, value: boolean) => {
+      const response = await axiosInstance.post('/attendees/update/lunch', {
+        userId,
+        lunchId,
+        value,
+      });
+      return response.data;
+    },
+    
+    sessionCheckIn: async (userId: number, session: string) => {
+      const response = await axiosInstance.post('/attendees/session/checkin', {
+        userId,
+        session,
+      });
       return response.data;
     },
   },

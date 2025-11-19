@@ -51,3 +51,35 @@ export function useIsCheckedIn(id: number) {
     enabled: !!id && id > 0,
   });
 }
+
+// Update lunch status mutation
+export function useUpdateLunch() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, lunchId, value }: { userId: number; lunchId: 1 | 2; value: boolean }) =>
+      apiClient.attendees.updateLunch(userId, lunchId, value),
+    onSuccess: (_, { userId }) => {
+      // Invalidate the specific attendee query
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.detail(userId) });
+      // Also invalidate the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.lists() });
+    },
+  });
+}
+
+// Session check-in mutation
+export function useSessionCheckIn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ userId, session }: { userId: number; session: string }) =>
+      apiClient.attendees.sessionCheckIn(userId, session),
+    onSuccess: (_, { userId }) => {
+      // Invalidate the specific attendee query
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.detail(userId) });
+      // Also invalidate the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.lists() });
+    },
+  });
+}
