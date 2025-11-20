@@ -7,16 +7,35 @@ import { Repository } from 'typeorm';
 import Papa from "papaparse"
 import { TicketService } from 'src/ticket/ticket.service';
 import { EmailService } from 'src/email/email.service';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 @Injectable()
 export class AttendeesService {
-  constructor(@InjectRepository(Attendee) private attendeeRepository: Repository<Attendee>, private ticketService: TicketService, private emailService: EmailService) { }
+  constructor(
+    @InjectRepository(Attendee) 
+    private attendeeRepository: Repository<Attendee>, 
+    private ticketService: TicketService, 
+    private emailService: EmailService,
+    @InjectQueue('email-queue')
+    private emailQueue: Queue,
+  ) { }
 
   async create(createAttendeeDto: CreateAttendeeDto) {
     const attendee = this.attendeeRepository.create(createAttendeeDto)
     const createdAttendee = await this.attendeeRepository.save(attendee)
 
-    await this.generateAndEmailTicket(createdAttendee.id)
+    // Add job to queue instead of sending email directly
+    await this.emailQueue.add('send-ticket', {
+      attendeeId: createdAttendee.id,
+    }, {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 5000,
+      },
+    });
+
     return createdAttendee
   }
 
