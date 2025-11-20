@@ -3,20 +3,28 @@ import { ConfigService } from '@nestjs/config';
 import * as nodemailer from "nodemailer"
 import { Attendee } from 'src/attendees/entities/attendee.entity';
 import { generateTicketEmailHtml } from './email.template';
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
+import SESTransport from 'nodemailer/lib/ses-transport';
 
 @Injectable()
 export class EmailService {
-  private transporter;
+  private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    this.transporter = nodemailer.createTransport(this.getGoogleConfig());
+    const config = this.getSESConfig()
+    if (!config) {
+      throw new Error("Could not get SES CONFIG")
+    }
+    this.transporter = nodemailer.createTransport(config);
   }
+
   async sendTicketMail(attendee: Attendee, ticketQrBuffer: Buffer) {
     const cid = 'ticket_qr_' + Math.random().toString(36).substring(7);
 
     const htmlContent = generateTicketEmailHtml(attendee, cid);
 
     return this.transporter.sendMail({
+      from: this.configService.get<string>('EMAIL_FROM') || 'noreply@awscloudclubnepal.com',
       to: attendee.email,
       subject: 'Ticket for AWS SCD Nepal 2025',
       html: htmlContent,
@@ -32,24 +40,25 @@ export class EmailService {
     });
   }
 
-  private getGoogleConfig() {
-    return {
-      service: "gmail",
-      auth: {
-        user: this.configService.get("SMTP_USER"),
-        pass: this.configService.get('GOOGLE_APP_PASSWORD')
-      },
+  private getSESConfig(): SESTransport.Options | null {
+    const region = this.configService.get<string>("AWS_REGION", "ap-south-1")
+    const accessKeyId = this.configService.get<string>("AWS_ACCESS_KEY_ID")
+    const secretAccessKey = this.configService.get<string>("AWS_SECRET_ACCESS_KEY")
+    const config = {
+      region: region
     }
-  }
-  private getSendGridConfig() {
+    if (accessKeyId && secretAccessKey) {
+      config["credentials"] = {
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey
+      }
+    }
+
+    const sesClient = new SESv2Client(config);
+
     return {
-      service: "sendgrid",
-      auth: {
-        user: "apikey",
-        pass: this.configService.get('SMTP_PASS')
-      },
+      SES: { sesClient, SendEmailCommand }
     }
   }
 
 }
-

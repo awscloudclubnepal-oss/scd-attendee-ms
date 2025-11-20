@@ -8,8 +8,8 @@ const AppDataSource = new DataSource({
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || 'postgres',
   database: process.env.DB_NAME || 'postgres',
-  entities: [__dirname + '/**/*.entity{.ts,.js}'],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  entities: ['dist/**/*.entity.js'],
+  migrations: ['dist/migrations/*.js'],
   synchronize: false,
 });
 

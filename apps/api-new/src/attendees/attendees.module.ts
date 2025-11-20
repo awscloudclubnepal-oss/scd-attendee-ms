@@ -5,16 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Attendee } from './entities/attendee.entity';
 import { TicketModule } from 'src/ticket/ticket.module';
 import { EmailModule } from 'src/email/email.module';
-import { BullModule } from '@nestjs/bullmq';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Attendee]),
     TicketModule,
     EmailModule,
-    BullModule.registerQueue({
-      name: 'email-queue',
-    }),
+    QueueModule
   ],
   controllers: [AttendeesController],
   providers: [AttendeesService],
