@@ -36,12 +36,20 @@ export class EmailService {
     return {
       service: "gmail",
       auth: {
-        user: "pqrsandesh@gmail.com",
+        user: this.configService.get("SMTP_USER"),
         pass: this.configService.get('GOOGLE_APP_PASSWORD')
       },
     }
   }
-
+  private getSendGridConfig() {
+    return {
+      service: "sendgrid",
+      auth: {
+        user: "apikey",
+        pass: this.configService.get('SMTP_PASS')
+      },
+    }
+  }
 
 }
 

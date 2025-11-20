@@ -10,6 +10,7 @@ import { JwtModule } from "@nestjs/jwt"
 import { AuthModule } from './auth/auth.module';
 import { TicketModule } from './ticket/ticket.module';
 import { EmailModule } from './email/email.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { EmailModule } from './email/email.module';
     AuthModule,
     TicketModule,
     EmailModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService],

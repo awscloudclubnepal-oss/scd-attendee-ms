@@ -59,7 +59,7 @@ export class AttendeesController {
 
   @Post('/update/lunch')
   updateLunch(@Body() updateLunchDto: UpdateLunchDto) {
-    return this.updateLunch(updateLunchDto)
+    return this.attendeesService.updateLunch(updateLunchDto)
   }
 
 
