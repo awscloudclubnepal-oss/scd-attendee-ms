@@ -112,3 +112,16 @@ export function useBulkDeleteAttendees() {
     },
   });
 }
+
+// Import attendees from CSV
+export function useImportAttendeesFromCsv() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (file: File) => apiClient.attendees.importCsv(file),
+    onSuccess: () => {
+      // Invalidate all attendee queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.all });
+    },
+  });
+}

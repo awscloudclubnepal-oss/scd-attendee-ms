@@ -28,15 +28,15 @@ export class AttendeesService {
     const createdAttendee = await this.attendeeRepository.save(attendee)
 
     // Add job to queue instead of sending email directly
-    await this.emailQueue.add('send-ticket', {
-      attendeeId: createdAttendee.id,
-    }, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 5000,
-      },
-    });
+    // await this.emailQueue.add('send-ticket', {
+    //   attendeeId: createdAttendee.id,
+    // }, {
+    //   attempts: 3,
+    //   backoff: {
+    //     type: 'exponential',
+    //     delay: 5000,
+    //   },
+    // });
 
     return createdAttendee
   }
@@ -249,13 +249,28 @@ export class AttendeesService {
     for (let i = 0; i < parsedData.length; i++) {
       const row = parsedData[i];
       try {
-        // Map CSV columns to database schema
+        // Parse session choices - handle the breakout session column
+        // The column name is: "Select 4 (1 from each row)  Breakout Session that you would like to attend:"
+        const sessionChoiceKey = Object.keys(row).find(key => 
+          key.toLowerCase().includes('breakout session') || 
+          key.toLowerCase().includes('session')
+        );
+        let sessionChoices: string[] = [];
+        if (sessionChoiceKey && row[sessionChoiceKey]) {
+          // Split by comma and trim each session
+          sessionChoices = String(row[sessionChoiceKey])
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter((s: string) => s.length > 0);
+        }
+
+        // Map CSV columns to database schema with flexible header matching
         const record: CreateAttendeeDto = {
-          full_name: row.full_name || row.Full_Name,
-          email: row.email,
-          phone: row.phone,
-          food_preference: row.food_preference || "",
-          session_choice: row.session_choice || [],
+          full_name: row['Full Name'] || row.full_name || row.Full_Name || row['full name'] || '',
+          email: row['Email Address'] || row.email || row.Email || row['email address'] || '',
+          phone: String(row['Contact Number'] || row.phone || row.Phone || row['contact number'] || row['Phone Number'] || ''),
+          food_preference: row.food_preference || row['Food Preference'] || "",
+          session_choice: sessionChoices.length > 0 ? sessionChoices : (row.session_choice || []),
           checked_in: row.checked_in || false,
           check_in_time: row.check_in_time || null,
           lunch: row.lunch || false,
@@ -267,7 +282,7 @@ export class AttendeesService {
           errors.push({
             row: i + 1,
             data: row,
-            error: "Missing required fields: first_name, last_name, or email",
+            error: "Missing required fields: full_name, phone, or email",
           });
           continue;
         }

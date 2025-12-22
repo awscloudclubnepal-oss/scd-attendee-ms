@@ -123,6 +123,17 @@ export const apiClient = {
       const response = await axiosInstance.post('/attendees/bulk-delete', { ids });
       return response.data;
     },
+
+    importCsv: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await axiosInstance.post('/attendees/csv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    },
   },
   
   // Tickets endpoints (placeholder for future use)

@@ -1,0 +1,23 @@
+Yatri Motors: Hardware-in-the-Loop & Over-the-Air Updates Magic
+
+Lajah Shrestha - Building and centralizing secure system with Kerberos authentication in AWS using Active Directory and AWS Workspace.
+
+Raman Pokhrel - Games on AWS
+
+Aditya | Gaurav - Multi-Cluster EKS Architecture in AWS enabling disaster recovery, blue-green deployments, cross-region failover, and hub-and-spoke mesh networking.
+Akrur Neupane - Locking Down the cloud : From Detection to Prevention on AWS
+
+Aayush Pokhrel - What Happens When You Type ‘git push’ — Behind the Scenes of DevSecOps
+
+Raju Mandal- From Guardrails to Governance: Managing GenAI Applications on AWS
+
+Nischal Shakya - Agentic AI on AWS: From Prompt Engineering to Orchestration
+
+Samikshaya Khadka- The Modern AI  Stack: Saftey , Security , and Responsible Deployment
+
+Subham | Rishikesh - Momo-Approved? Serverless Content Moderation.
+
+Apil Chaudhary - Visualize IoT in Real-Time: Build a Live Dashboard with AWS in Minutes
+
+Suraj Bhattrai - Aviatrix: Invisible Network Shield in AWS
+
