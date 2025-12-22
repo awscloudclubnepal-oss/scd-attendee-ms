@@ -2,9 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAttendeeDto } from './dto/create-attendee.dto';
 import { SessionCheckInDto, UpdateAttendeeDto, UpdateLunchDto } from './dto/update-attendee.dto';
 import { PaginationDto, PaginatedResponseDto } from './dto/pagination.dto';
+import { BulkDeleteDto } from './dto/bulk-delete.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Attendee } from './entities/attendee.entity';
-import { ILike, Repository } from 'typeorm';
+import { ILike, In, Repository } from 'typeorm';
 import Papa from "papaparse"
 import { TicketService } from 'src/ticket/ticket.service';
 import { EmailService } from 'src/email/email.service';
@@ -110,6 +111,38 @@ export class AttendeesService {
     const attendee = await this.findOne(id)
 
     return this.attendeeRepository.remove(attendee)
+  }
+
+  async bulkRemove(bulkDeleteDto: BulkDeleteDto) {
+    const { ids } = bulkDeleteDto;
+    
+    if (!ids || ids.length === 0) {
+      return {
+        success: false,
+        message: 'No attendee IDs provided',
+        deleted: 0,
+      };
+    }
+
+    const attendees = await this.attendeeRepository.find({
+      where: { id: In(ids) },
+    });
+
+    if (attendees.length === 0) {
+      return {
+        success: false,
+        message: 'No attendees found with the provided IDs',
+        deleted: 0,
+      };
+    }
+
+    await this.attendeeRepository.remove(attendees);
+
+    return {
+      success: true,
+      message: `Successfully deleted ${attendees.length} attendee(s)`,
+      deleted: attendees.length,
+    };
   }
 
   async checkIn(id: number) {

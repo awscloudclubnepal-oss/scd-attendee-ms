@@ -84,3 +84,31 @@ export function useSessionCheckIn() {
     },
   });
 }
+
+// Delete attendee mutation
+export function useDeleteAttendee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => apiClient.attendees.delete(id),
+    onSuccess: (_, id) => {
+      // Invalidate the specific attendee query
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.detail(id) });
+      // Also invalidate the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.lists() });
+    },
+  });
+}
+
+// Bulk delete attendees mutation
+export function useBulkDeleteAttendees() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => apiClient.attendees.bulkDelete(ids),
+    onSuccess: () => {
+      // Invalidate all attendee queries
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.all });
+    },
+  });
+}

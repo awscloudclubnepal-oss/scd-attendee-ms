@@ -4,6 +4,7 @@ import { AttendeesService } from './attendees.service';
 import { CreateAttendeeDto } from './dto/create-attendee.dto';
 import { SessionCheckInDto, UpdateAttendeeDto, UpdateLunchDto } from './dto/update-attendee.dto';
 import { PaginationDto } from './dto/pagination.dto';
+import { BulkDeleteDto } from './dto/bulk-delete.dto';
 import { Roles } from 'src/auth';
 import { ROLE } from 'src/users/entities/user.entity';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
@@ -36,6 +37,11 @@ export class AttendeesController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.attendeesService.remove(+id);
+  }
+
+  @Post('/bulk-delete')
+  bulkDelete(@Body() bulkDeleteDto: BulkDeleteDto) {
+    return this.attendeesService.bulkRemove(bulkDeleteDto);
   }
 
   @Get('ischeckedin/:id')

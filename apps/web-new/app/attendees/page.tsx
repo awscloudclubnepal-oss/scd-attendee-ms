@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAttendees } from '@/hooks/use-attendees';
+import { useAttendees, useBulkDeleteAttendees } from '@/hooks/use-attendees';
 import { useLogout } from '@/hooks/use-auth';
 import { authService } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
@@ -17,14 +17,32 @@ export default function AttendeesPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const limit = 10;
 
   const logoutMutation = useLogout();
+  const bulkDeleteMutation = useBulkDeleteAttendees();
   const { data: attendeesData, isLoading: isLoadingAttendees, isError, error } = useAttendees({
     page,
     limit,
     search: debouncedSearch || undefined,
   });
+
+  // Get current page attendee IDs for "select all" functionality
+  const currentPageIds = useMemo(() => {
+    return attendeesData?.data?.map((a) => a.id) || [];
+  }, [attendeesData?.data]);
+
+  // Check if all items on current page are selected
+  const allSelected = useMemo(() => {
+    return currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id));
+  }, [currentPageIds, selectedIds]);
+
+  // Check if some items on current page are selected
+  const someSelected = useMemo(() => {
+    return currentPageIds.some((id) => selectedIds.has(id)) && !allSelected;
+  }, [currentPageIds, selectedIds, allSelected]);
 
   // Debounce search input
   useEffect(() => {
@@ -34,6 +52,11 @@ export default function AttendeesPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
+
+  // Clear selection when page or search changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [page, debouncedSearch]);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -46,6 +69,53 @@ export default function AttendeesPage() {
 
   const handleSignOut = () => {
     logoutMutation.mutate();
+  };
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      // Deselect all on current page
+      setSelectedIds((prev) => {
+        const newSet = new Set(prev);
+        currentPageIds.forEach((id) => newSet.delete(id));
+        return newSet;
+      });
+    } else {
+      // Select all on current page
+      setSelectedIds((prev) => {
+        const newSet = new Set(prev);
+        currentPageIds.forEach((id) => newSet.add(id));
+        return newSet;
+      });
+    }
+  };
+
+  const handleSelectOne = (id: number) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    bulkDeleteMutation.mutate(Array.from(selectedIds), {
+      onSuccess: () => {
+        setSelectedIds(new Set());
+        setShowDeleteConfirm(false);
+      },
+      onError: () => {
+        setShowDeleteConfirm(false);
+      },
+    });
   };
 
   const formatDate = (date: Date | null) => {
@@ -178,6 +248,35 @@ export default function AttendeesPage() {
               </div>
               {attendeesData?.meta && (
                 <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  {selectedIds.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-purple-600 dark:text-purple-400">
+                        {selectedIds.size} selected
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDeleteSelected}
+                        className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950"
+                        disabled={bulkDeleteMutation.isPending}
+                      >
+                        <svg
+                          className="mr-1 h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                        {bulkDeleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                      </Button>
+                    </div>
+                  )}
                   <span>
                     Total: <strong className="text-gray-900 dark:text-white">{attendeesData.meta.total}</strong> attendees
                   </span>
@@ -249,6 +348,17 @@ export default function AttendeesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-800">
+                      <th className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = someSelected;
+                          }}
+                          onChange={handleSelectAll}
+                          className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800"
+                        />
+                      </th>
                       <th className="px-4 py-3 text-left font-medium text-gray-900 dark:text-white">Name</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-900 dark:text-white">Email</th>
                       <th className="px-4 py-3 text-left font-medium text-gray-900 dark:text-white">Phone</th>
@@ -263,8 +373,18 @@ export default function AttendeesPage() {
                     {attendeesData?.data?.map((attendee: Attendee) => (
                       <tr
                         key={attendee.id}
-                        className="border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900"
+                        className={`border-b border-gray-100 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900 ${
+                          selectedIds.has(attendee.id) ? 'bg-purple-50 dark:bg-purple-950/30' : ''
+                        }`}
                       >
+                        <td className="px-4 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(attendee.id)}
+                            onChange={() => handleSelectOne(attendee.id)}
+                            className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800"
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <div className="font-medium text-gray-900 dark:text-white">
                             {attendee.full_name}
@@ -450,6 +570,91 @@ export default function AttendeesPage() {
           </CardContent>
         </Card>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowDeleteConfirm(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative z-10 w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <svg
+                  className="h-6 w-6 text-red-600 dark:text-red-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Delete Attendees
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            
+            <p className="mb-6 text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete{' '}
+              <strong className="text-gray-900 dark:text-white">{selectedIds.size}</strong>{' '}
+              attendee{selectedIds.size > 1 ? 's' : ''}? This will permanently remove their data.
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={bulkDeleteMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={confirmDelete}
+                disabled={bulkDeleteMutation.isPending}
+                className="bg-red-600 text-white hover:bg-red-700"
+              >
+                {bulkDeleteMutation.isPending ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                    Delete
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

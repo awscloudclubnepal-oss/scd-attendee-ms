@@ -113,6 +113,16 @@ export const apiClient = {
       });
       return response.data;
     },
+
+    delete: async (id: number) => {
+      const response = await axiosInstance.delete(`/attendees/${id}`);
+      return response.data;
+    },
+
+    bulkDelete: async (ids: number[]) => {
+      const response = await axiosInstance.post('/attendees/bulk-delete', { ids });
+      return response.data;
+    },
   },
   
   // Tickets endpoints (placeholder for future use)
