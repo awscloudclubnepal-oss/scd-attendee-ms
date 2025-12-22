@@ -6,13 +6,13 @@ import { Attendee, PaginatedResponse } from '@/types/attendee';
 export const attendeeKeys = {
   all: ['attendees'] as const,
   lists: () => [...attendeeKeys.all, 'list'] as const,
-  list: (filters?: { page?: number; limit?: number; search?: string }) => [...attendeeKeys.lists(), filters] as const,
+  list: (filters?: { page?: number; limit?: number; search?: string; ticketSent?: boolean }) => [...attendeeKeys.lists(), filters] as const,
   details: () => [...attendeeKeys.all, 'detail'] as const,
   detail: (id: number) => [...attendeeKeys.details(), id] as const,
 };
 
 // Get all attendees with pagination
-export function useAttendees(params?: { page?: number; limit?: number; search?: string }) {
+export function useAttendees(params?: { page?: number; limit?: number; search?: string; ticketSent?: boolean }) {
   return useQuery<PaginatedResponse<Attendee>>({
     queryKey: attendeeKeys.list(params),
     queryFn: () => apiClient.attendees.getAll(params),
@@ -122,6 +122,34 @@ export function useImportAttendeesFromCsv() {
     onSuccess: () => {
       // Invalidate all attendee queries to refresh the list
       queryClient.invalidateQueries({ queryKey: attendeeKeys.all });
+    },
+  });
+}
+
+// Bulk send tickets mutation
+export function useBulkSendTickets() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => apiClient.attendees.bulkSendTickets(ids),
+    onSuccess: () => {
+      // Invalidate all attendee queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.all });
+    },
+  });
+}
+
+// Resend single ticket mutation
+export function useResendTicket() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => apiClient.attendees.resendTicket(id),
+    onSuccess: (_, id) => {
+      // Invalidate the specific attendee query
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.detail(id) });
+      // Also invalidate the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.lists() });
     },
   });
 }

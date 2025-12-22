@@ -44,6 +44,11 @@ export class AttendeesController {
     return this.attendeesService.bulkRemove(bulkDeleteDto);
   }
 
+  @Post('/bulk-send-tickets')
+  bulkSendTickets(@Body() bulkSendDto: BulkDeleteDto) {
+    return this.attendeesService.bulkSendTickets(bulkSendDto);
+  }
+
   @Get('ischeckedin/:id')
   isCheckIn(@Param('id') id: string) {
     return this.attendeesService.isCheckedIn(+id)

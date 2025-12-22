@@ -57,16 +57,29 @@ export class AttendeesService {
   }
 
   async findAllPaginated(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Attendee>> {
-    const { page = 1, limit = 10, search } = paginationDto;
+    const { page = 1, limit = 10, search, ticketSent } = paginationDto;
     const skip = (page - 1) * limit;
 
-    const whereConditions = search
-      ? [
-          { full_name: ILike(`%${search}%`) },
-          { email: ILike(`%${search}%`) },
-          { phone: ILike(`%${search}%`) },
-        ]
-      : undefined;
+    // Build where conditions
+    let whereConditions: any = {};
+    
+    // Add ticket_sent filter if specified
+    if (ticketSent !== undefined) {
+      whereConditions.ticket_sent = ticketSent;
+    }
+
+    // Add search conditions
+    if (search) {
+      // If we have both search and ticketSent filter, we need to combine them
+      const searchConditions = [
+        { full_name: ILike(`%${search}%`), ...whereConditions },
+        { email: ILike(`%${search}%`), ...whereConditions },
+        { phone: ILike(`%${search}%`), ...whereConditions },
+      ];
+      whereConditions = searchConditions;
+    } else if (Object.keys(whereConditions).length === 0) {
+      whereConditions = undefined;
+    }
 
     const [data, total] = await this.attendeeRepository.findAndCount({
       where: whereConditions,
@@ -142,6 +155,51 @@ export class AttendeesService {
       success: true,
       message: `Successfully deleted ${attendees.length} attendee(s)`,
       deleted: attendees.length,
+    };
+  }
+
+  async bulkSendTickets(bulkSendDto: BulkDeleteDto) {
+    const { ids } = bulkSendDto;
+    
+    if (!ids || ids.length === 0) {
+      return {
+        success: false,
+        message: 'No attendee IDs provided',
+        queued: 0,
+      };
+    }
+
+    const attendees = await this.attendeeRepository.find({
+      where: { id: In(ids) },
+    });
+
+    if (attendees.length === 0) {
+      return {
+        success: false,
+        message: 'No attendees found with the provided IDs',
+        queued: 0,
+      };
+    }
+
+    // Add all attendees to the email queue
+    let queuedCount = 0;
+    for (const attendee of attendees) {
+      await this.emailQueue.add('send-ticket', {
+        attendeeId: attendee.id,
+      }, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 5000,
+        },
+      });
+      queuedCount++;
+    }
+
+    return {
+      success: true,
+      message: `Successfully queued ${queuedCount} ticket email(s) for sending`,
+      queued: queuedCount,
     };
   }
 

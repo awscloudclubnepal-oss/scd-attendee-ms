@@ -36,6 +36,9 @@ export class Attendee {
   @Column({ type: 'boolean', default: false })
   lunch2: boolean
 
+  @Column({ type: 'boolean', default: false })
+  ticket_sent: boolean
+
   @CreateDateColumn()
   created_at: Date
 

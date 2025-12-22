@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, Min, Max, IsString } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsNumber, Min, Max, IsString, IsBoolean } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class PaginationDto {
@@ -22,6 +22,16 @@ export class PaginationDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiProperty({ required: false, description: 'Filter by ticket sent status' })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean()
+  ticketSent?: boolean;
 }
 
 export class PaginatedResponseDto<T> {

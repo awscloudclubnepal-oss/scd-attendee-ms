@@ -48,6 +48,10 @@ export class EmailProcessor extends WorkerHost {
       this.logger.debug(`Sending email to ${attendee.email}`);
       const result = await this.emailService.sendTicketMail(attendee, qrBuffer);
 
+      // Update ticket_sent status in database
+      attendee.ticket_sent = true;
+      await this.attendeesRepo.save(attendee);
+
       this.logger.log(`Successfully sent ticket to ${attendee.email}`);
 
       return {

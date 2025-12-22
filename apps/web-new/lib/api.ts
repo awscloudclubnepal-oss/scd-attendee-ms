@@ -77,7 +77,7 @@ export const apiClient = {
   
   // Attendees endpoints
   attendees: {
-    getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+    getAll: async (params?: { page?: number; limit?: number; search?: string; ticketSent?: boolean }) => {
       const response = await axiosInstance.get('/attendees', { params });
       return response.data;
     },
@@ -121,6 +121,16 @@ export const apiClient = {
 
     bulkDelete: async (ids: number[]) => {
       const response = await axiosInstance.post('/attendees/bulk-delete', { ids });
+      return response.data;
+    },
+
+    bulkSendTickets: async (ids: number[]) => {
+      const response = await axiosInstance.post('/attendees/bulk-send-tickets', { ids });
+      return response.data;
+    },
+
+    resendTicket: async (id: number) => {
+      const response = await axiosInstance.post(`/attendees/resendTicket/${id}`);
       return response.data;
     },
 

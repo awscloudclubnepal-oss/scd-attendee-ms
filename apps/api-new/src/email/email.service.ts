@@ -11,11 +11,16 @@ export class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
-    const config = this.getSESConfig()
-    if (!config) {
-      throw new Error("Could not get SES CONFIG")
+    // Try Gmail first, fall back to SES
+    const gmailPassword = this.configService.get<string>('GOOGLE_APP_PASSWORD');
+    const gmailUser = this.configService.get<string>('GMAIL_USER');
+
+    if (gmailPassword && gmailUser) {
+      this.transporter = this.createGmailTransport(gmailUser, gmailPassword);
+    } else {
+      throw new Error("Could not get email configuration. Set GMAIL_USER and GOOGLE_APP_PASSWORD.");
+
     }
-    this.transporter = nodemailer.createTransport(config);
   }
 
   async sendTicketMail(attendee: Attendee, ticketQrBuffer: Buffer) {
@@ -24,7 +29,7 @@ export class EmailService {
     const htmlContent = generateTicketEmailHtml(attendee, cid);
 
     return this.transporter.sendMail({
-      from: this.configService.get<string>('EMAIL_FROM') || 'noreply@awscloudclubnepal.com',
+      from: this.configService.get<string>('EMAIL_FROM') || this.configService.get<string>('GMAIL_USER') || 'noreply@awscloudclubnepal.com',
       to: attendee.email,
       subject: 'Ticket for AWS SCD Nepal 2025',
       html: htmlContent,
@@ -37,6 +42,16 @@ export class EmailService {
         },
       ],
 
+    });
+  }
+
+  private createGmailTransport(user: string, appPassword: string): nodemailer.Transporter {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: user,
+        pass: appPassword,
+      },
     });
   }
 

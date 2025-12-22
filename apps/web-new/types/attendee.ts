@@ -10,6 +10,7 @@ export interface Attendee {
   check_in_time: Date | null;
   lunch: boolean;
   lunch2: boolean;
+  ticket_sent: boolean;
   created_at: Date;
   updated_at: Date;
 }
