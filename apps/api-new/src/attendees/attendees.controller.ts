@@ -1,8 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseInterceptors, UploadedFile, BadRequestException, Query } from '@nestjs/common';
 import { FileInterceptor } from "@nestjs/platform-express"
 import { AttendeesService } from './attendees.service';
 import { CreateAttendeeDto } from './dto/create-attendee.dto';
 import { SessionCheckInDto, UpdateAttendeeDto, UpdateLunchDto } from './dto/update-attendee.dto';
+import { PaginationDto } from './dto/pagination.dto';
 import { Roles } from 'src/auth';
 import { ROLE } from 'src/users/entities/user.entity';
 import { ApiBody, ApiConsumes } from '@nestjs/swagger';
@@ -18,8 +19,8 @@ export class AttendeesController {
   }
 
   @Get()
-  findAll() {
-    return this.attendeesService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.attendeesService.findAllPaginated(paginationDto);
   }
 
   @Get(':id')

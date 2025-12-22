@@ -26,6 +26,9 @@ services:
 
   aws-ticket-api:
     container_name: aws-ticket-api
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: aws-ticket-api:latest
     env_file:
       - .env

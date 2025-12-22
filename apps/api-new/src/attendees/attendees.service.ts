@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateAttendeeDto } from './dto/create-attendee.dto';
 import { SessionCheckInDto, UpdateAttendeeDto, UpdateLunchDto } from './dto/update-attendee.dto';
+import { PaginationDto, PaginatedResponseDto } from './dto/pagination.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Attendee } from './entities/attendee.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import Papa from "papaparse"
 import { TicketService } from 'src/ticket/ticket.service';
 import { EmailService } from 'src/email/email.service';
@@ -52,6 +53,40 @@ export class AttendeesService {
 
   async findAll() {
     return this.attendeeRepository.find()
+  }
+
+  async findAllPaginated(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Attendee>> {
+    const { page = 1, limit = 10, search } = paginationDto;
+    const skip = (page - 1) * limit;
+
+    const whereConditions = search
+      ? [
+          { full_name: ILike(`%${search}%`) },
+          { email: ILike(`%${search}%`) },
+          { phone: ILike(`%${search}%`) },
+        ]
+      : undefined;
+
+    const [data, total] = await this.attendeeRepository.findAndCount({
+      where: whereConditions,
+      skip,
+      take: limit,
+      order: { created_at: 'DESC' },
+    });
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async findOne(id: number) {

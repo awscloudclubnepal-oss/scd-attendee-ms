@@ -77,8 +77,8 @@ export const apiClient = {
   
   // Attendees endpoints
   attendees: {
-    getAll: async () => {
-      const response = await axiosInstance.get('/attendees');
+    getAll: async (params?: { page?: number; limit?: number; search?: string }) => {
+      const response = await axiosInstance.get('/attendees', { params });
       return response.data;
     },
     

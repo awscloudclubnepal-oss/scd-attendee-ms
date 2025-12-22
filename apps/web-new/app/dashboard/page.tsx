@@ -166,8 +166,11 @@ export default function DashboardPage() {
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 View and manage attendee information
               </p>
-              <Button className="mt-4 w-full" disabled>
-                Coming Soon
+              <Button 
+                className="mt-4 w-full"
+                onClick={() => router.push('/attendees')}
+              >
+                View Attendees
               </Button>
             </CardContent>
           </Card>

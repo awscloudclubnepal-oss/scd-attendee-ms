@@ -14,6 +14,22 @@ export interface Attendee {
   updated_at: Date;
 }
 
+// Pagination Meta
+export interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+// Paginated Response
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: PaginationMeta;
+}
+
 // QR Code Data Structure
 export interface QRTicketData {
   id: number;

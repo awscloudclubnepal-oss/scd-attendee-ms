@@ -1,21 +1,22 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Attendee } from '@/types/attendee';
+import { Attendee, PaginatedResponse } from '@/types/attendee';
 
 // Query keys
 export const attendeeKeys = {
   all: ['attendees'] as const,
   lists: () => [...attendeeKeys.all, 'list'] as const,
-  list: (filters?: any) => [...attendeeKeys.lists(), filters] as const,
+  list: (filters?: { page?: number; limit?: number; search?: string }) => [...attendeeKeys.lists(), filters] as const,
   details: () => [...attendeeKeys.all, 'detail'] as const,
   detail: (id: number) => [...attendeeKeys.details(), id] as const,
 };
 
-// Get all attendees
-export function useAttendees() {
-  return useQuery({
-    queryKey: attendeeKeys.lists(),
-    queryFn: () => apiClient.attendees.getAll(),
+// Get all attendees with pagination
+export function useAttendees(params?: { page?: number; limit?: number; search?: string }) {
+  return useQuery<PaginatedResponse<Attendee>>({
+    queryKey: attendeeKeys.list(params),
+    queryFn: () => apiClient.attendees.getAll(params),
+    placeholderData: keepPreviousData,
   });
 }
 
