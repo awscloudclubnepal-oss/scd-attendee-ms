@@ -4,6 +4,7 @@
 node_modules
 .pnp
 .pnp.js
+backups
 
 # Local env files
 .env
