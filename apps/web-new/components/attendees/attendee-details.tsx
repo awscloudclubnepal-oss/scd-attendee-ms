@@ -169,7 +169,7 @@ export function AttendeeDetails({
                       attendee.lunch ? 'bg-green-500' : 'bg-gray-300'
                     }`}
                   />
-                  <span className="text-sm font-medium">Lunch 1</span>
+                  <span className="text-sm font-medium">Breakfast</span>
                 </div>
                 <Button
                   size="sm"
@@ -187,7 +187,7 @@ export function AttendeeDetails({
                       attendee.lunch2 ? 'bg-green-500' : 'bg-gray-300'
                     }`}
                   />
-                  <span className="text-sm font-medium">Lunch 2</span>
+                  <span className="text-sm font-medium">Lunch</span>
                 </div>
                 <Button
                   size="sm"
