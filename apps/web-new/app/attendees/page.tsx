@@ -27,7 +27,7 @@ export default function AttendeesPage() {
   const [importResult, setImportResult] = useState<{ success: boolean; inserted: number; errors: any[] } | null>(null);
   const [ticketSentFilter, setTicketSentFilter] = useState<TicketSentFilter>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const limit = 10;
+  const limit = Number(process.env.NEXT_PUBLIC_PAGINATION_LIMIT) || 20;
 
   const logoutMutation = useLogout();
   const bulkDeleteMutation = useBulkDeleteAttendees();
