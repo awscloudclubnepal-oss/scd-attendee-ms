@@ -81,6 +81,17 @@ export const apiClient = {
       const response = await axiosInstance.get('/attendees', { params });
       return response.data;
     },
+
+    create: async (data: {
+      full_name: string;
+      email: string;
+      phone: string;
+      food_preference: string;
+      session_choice?: string[];
+    }) => {
+      const response = await axiosInstance.post('/attendees', data);
+      return response.data;
+    },
     
     getById: async (id: number) => {
       const response = await axiosInstance.get(`/attendees/${id}`);

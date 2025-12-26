@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Attendee, PaginatedResponse } from '@/types/attendee';
+import { Attendee, PaginatedResponse, CreateAttendeeDto } from '@/types/attendee';
 
 // Query keys
 export const attendeeKeys = {
@@ -96,6 +96,19 @@ export function useDeleteAttendee() {
       queryClient.invalidateQueries({ queryKey: attendeeKeys.detail(id) });
       // Also invalidate the list
       queryClient.invalidateQueries({ queryKey: attendeeKeys.lists() });
+    },
+  });
+}
+
+// Create attendee mutation
+export function useCreateAttendee() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: CreateAttendeeDto) => apiClient.attendees.create(data),
+    onSuccess: () => {
+      // Invalidate all attendee queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: attendeeKeys.all });
     },
   });
 }

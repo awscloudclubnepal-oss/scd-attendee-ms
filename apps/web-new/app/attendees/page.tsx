@@ -2,15 +2,25 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAttendees, useBulkDeleteAttendees, useImportAttendeesFromCsv, useBulkSendTickets } from '@/hooks/use-attendees';
+import { useAttendees, useBulkDeleteAttendees, useImportAttendeesFromCsv, useBulkSendTickets, useCreateAttendee } from '@/hooks/use-attendees';
 import { useLogout } from '@/hooks/use-auth';
 import { authService } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Attendee } from '@/types/attendee';
+import { Attendee, CreateAttendeeDto } from '@/types/attendee';
 
 type TicketSentFilter = 'all' | 'sent' | 'not-sent';
+
+// Available sessions for attendees
+const AVAILABLE_SESSIONS = [
+  'Opening Keynote',
+  'AWS Security Best Practices',
+  'Serverless Architecture',
+  'Machine Learning on AWS',
+  'DevOps with AWS',
+  'Closing Session',
+];
 
 export default function AttendeesPage() {
   const router = useRouter();
@@ -28,11 +38,22 @@ export default function AttendeesPage() {
   const [ticketSentFilter, setTicketSentFilter] = useState<TicketSentFilter>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const limit = Number(process.env.NEXT_PUBLIC_PAGINATION_LIMIT) || 20;
+  
+  // Add Attendee Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newAttendee, setNewAttendee] = useState<CreateAttendeeDto>({
+    full_name: '',
+    email: '',
+    phone: '',
+    food_preference: 'veg',
+    session_choice: [],
+  });
 
   const logoutMutation = useLogout();
   const bulkDeleteMutation = useBulkDeleteAttendees();
   const bulkSendTicketsMutation = useBulkSendTickets();
   const importCsvMutation = useImportAttendeesFromCsv();
+  const createAttendeeMutation = useCreateAttendee();
   const { data: attendeesData, isLoading: isLoadingAttendees, isError, error } = useAttendees({
     page,
     limit,
@@ -190,6 +211,56 @@ export default function AttendeesPage() {
     }
   };
 
+  const handleAddAttendeeClick = () => {
+    setShowAddModal(true);
+    setNewAttendee({
+      full_name: '',
+      email: '',
+      phone: '',
+      food_preference: 'veg',
+      session_choice: [],
+    });
+  };
+
+  const handleAddAttendeeSubmit = () => {
+    if (!newAttendee.full_name || !newAttendee.email || !newAttendee.phone) return;
+    
+    createAttendeeMutation.mutate(newAttendee, {
+      onSuccess: () => {
+        setShowAddModal(false);
+        setNewAttendee({
+          full_name: '',
+          email: '',
+          phone: '',
+          food_preference: 'veg',
+          session_choice: [],
+        });
+      },
+    });
+  };
+
+  const closeAddModal = () => {
+    setShowAddModal(false);
+    setNewAttendee({
+      full_name: '',
+      email: '',
+      phone: '',
+      food_preference: 'veg',
+      session_choice: [],
+    });
+  };
+
+  const handleSessionToggle = (session: string) => {
+    setNewAttendee(prev => {
+      const currentSessions = prev.session_choice || [];
+      if (currentSessions.includes(session)) {
+        return { ...prev, session_choice: currentSessions.filter(s => s !== session) };
+      } else {
+        return { ...prev, session_choice: [...currentSessions, session] };
+      }
+    });
+  };
+
   const formatDate = (date: Date | null) => {
     if (!date) return '-';
     return new Date(date).toLocaleString();
@@ -275,7 +346,23 @@ export default function AttendeesPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={handleImportClick}>
+            <Button onClick={handleAddAttendeeClick}>
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Add Attendee
+            </Button>
+            <Button variant="outline" onClick={handleImportClick}>
               <svg
                 className="mr-2 h-4 w-4"
                 fill="none"
@@ -1043,6 +1130,147 @@ export default function AttendeesPage() {
                       />
                     </svg>
                     Send Tickets
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Attendee Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closeAddModal}
+          />
+          
+          {/* Modal */}
+          <div className="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+                <svg
+                  className="h-6 w-6 text-green-600 dark:text-green-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Add New Attendee
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Fill in the details to add a new attendee
+                </p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  placeholder="Enter full name"
+                  value={newAttendee.full_name}
+                  onChange={(e) => setNewAttendee(prev => ({ ...prev, full_name: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="email"
+                  placeholder="Enter email address"
+                  value={newAttendee.email}
+                  onChange={(e) => setNewAttendee(prev => ({ ...prev, email: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Phone <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="tel"
+                  placeholder="Enter phone number"
+                  value={newAttendee.phone}
+                  onChange={(e) => setNewAttendee(prev => ({ ...prev, phone: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Session Choices
+                </label>
+                <div className="space-y-2 max-h-40 overflow-y-auto rounded-md border border-gray-200 p-3 dark:border-gray-700">
+                  {AVAILABLE_SESSIONS.map((session) => (
+                    <label key={session} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newAttendee.session_choice?.includes(session) || false}
+                        onChange={() => handleSessionToggle(session)}
+                        className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-800"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{session}</span>
+                    </label>
+                  ))}
+                </div>
+                {newAttendee.session_choice && newAttendee.session_choice.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Selected: {newAttendee.session_choice.length} session(s)
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={closeAddModal}
+                disabled={createAttendeeMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddAttendeeSubmit}
+                disabled={createAttendeeMutation.isPending || !newAttendee.full_name || !newAttendee.email || !newAttendee.phone}
+              >
+                {createAttendeeMutation.isPending ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="mr-2 h-4 w-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Add Attendee
                   </>
                 )}
               </Button>
