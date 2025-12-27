@@ -57,7 +57,7 @@ export class AttendeesService {
   }
 
   async findAllPaginated(paginationDto: PaginationDto): Promise<PaginatedResponseDto<Attendee>> {
-    const { page = 1, limit = 10, search, ticketSent } = paginationDto;
+    const { page = 1, limit = 10, search, ticketSent, checkedIn } = paginationDto;
     const skip = (page - 1) * limit;
 
     // Build where conditions
@@ -66,6 +66,11 @@ export class AttendeesService {
     // Add ticket_sent filter if specified
     if (ticketSent !== undefined) {
       whereConditions.ticket_sent = ticketSent;
+    }
+
+    // Add checked_in filter if specified
+    if (checkedIn !== undefined) {
+      whereConditions.checked_in = checkedIn;
     }
 
     // Add search conditions
