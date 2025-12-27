@@ -6,13 +6,13 @@ import { Attendee, PaginatedResponse, CreateAttendeeDto } from '@/types/attendee
 export const attendeeKeys = {
   all: ['attendees'] as const,
   lists: () => [...attendeeKeys.all, 'list'] as const,
-  list: (filters?: { page?: number; limit?: number; search?: string; ticketSent?: boolean }) => [...attendeeKeys.lists(), filters] as const,
+  list: (filters?: { page?: number; limit?: number; search?: string; ticketSent?: boolean; checkedIn?: boolean }) => [...attendeeKeys.lists(), filters] as const,
   details: () => [...attendeeKeys.all, 'detail'] as const,
   detail: (id: number) => [...attendeeKeys.details(), id] as const,
 };
 
 // Get all attendees with pagination
-export function useAttendees(params?: { page?: number; limit?: number; search?: string; ticketSent?: boolean }) {
+export function useAttendees(params?: { page?: number; limit?: number; search?: string; ticketSent?: boolean; checkedIn?: boolean }) {
   return useQuery<PaginatedResponse<Attendee>>({
     queryKey: attendeeKeys.list(params),
     queryFn: () => apiClient.attendees.getAll(params),

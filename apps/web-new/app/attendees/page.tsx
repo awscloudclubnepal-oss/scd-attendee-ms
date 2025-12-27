@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Attendee, CreateAttendeeDto } from '@/types/attendee';
 
 type TicketSentFilter = 'all' | 'sent' | 'not-sent';
+type CheckedInFilter = 'all' | 'checked-in' | 'not-checked-in';
 
 // Available sessions for attendees
 const AVAILABLE_SESSIONS = [
@@ -36,6 +37,7 @@ export default function AttendeesPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<{ success: boolean; inserted: number; errors: any[] } | null>(null);
   const [ticketSentFilter, setTicketSentFilter] = useState<TicketSentFilter>('all');
+  const [checkedInFilter, setCheckedInFilter] = useState<CheckedInFilter>('all');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const limit = Number(process.env.NEXT_PUBLIC_PAGINATION_LIMIT) || 20;
   
@@ -59,6 +61,7 @@ export default function AttendeesPage() {
     limit,
     search: debouncedSearch || undefined,
     ticketSent: ticketSentFilter === 'all' ? undefined : ticketSentFilter === 'sent',
+    checkedIn: checkedInFilter === 'all' ? undefined : checkedInFilter === 'checked-in',
   });
 
   // Get current page attendee IDs for "select all" functionality
@@ -88,7 +91,7 @@ export default function AttendeesPage() {
   // Clear selection when page or search changes
   useEffect(() => {
     setSelectedIds(new Set());
-  }, [page, debouncedSearch, ticketSentFilter]);
+  }, [page, debouncedSearch, ticketSentFilter, checkedInFilter]);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -436,6 +439,19 @@ export default function AttendeesPage() {
                   <option value="all">All Tickets</option>
                   <option value="sent">Ticket Sent</option>
                   <option value="not-sent">Ticket Not Sent</option>
+                </select>
+                {/* Check-in Filter */}
+                <select
+                  value={checkedInFilter}
+                  onChange={(e) => {
+                    setCheckedInFilter(e.target.value as CheckedInFilter);
+                    setPage(1);
+                  }}
+                  className="h-10 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                >
+                  <option value="all">All Check-ins</option>
+                  <option value="checked-in">Checked In</option>
+                  <option value="not-checked-in">Not Checked In</option>
                 </select>
               </div>
               {attendeesData?.meta && (

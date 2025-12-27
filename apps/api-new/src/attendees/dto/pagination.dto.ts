@@ -32,6 +32,16 @@ export class PaginationDto {
   })
   @IsBoolean()
   ticketSent?: boolean;
+
+  @ApiProperty({ required: false, description: 'Filter by check-in status' })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean()
+  checkedIn?: boolean;
 }
 
 export class PaginatedResponseDto<T> {
