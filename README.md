@@ -1,6 +1,6 @@
-# AWS Ticket Management System
+# AWS Student Community Day Nepal Attendee Management System
 
-A ticket management system built for AWS Student Communit Day event registration, attendee check-in, and email ticketing.
+A attendee management system built for AWS Student Communit Day event registration, attendee check-in, and email ticketing.
 
 ## Table of Contents
 
