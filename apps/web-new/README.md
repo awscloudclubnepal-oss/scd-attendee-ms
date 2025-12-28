@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Ticketing UI (Next.js)
 
-First, run the development server:
+This application is the admin and operations UI for the AWS Ticket Management System. It supports attendee management (search, pagination, bulk actions, CSV import), ticket sending, and on-site scanning/check-in workflows.
+
+## Prerequisites
+
+- Node.js (v18+)
+- pnpm
+
+## Environment variables
+
+Create a local environment file (recommended):
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required variables:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `NEXT_PUBLIC_API_URL`
+	- Base URL for the API (example: `http://localhost:3000`)
+- `NEXT_PUBLIC_PAGINATION_LIMIT`
+	- Controls how many attendees are shown per page in the attendee list
+	- Defaults to `20` when unset
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Development
 
-## Learn More
+Start the development server from the repository root. This is the recommended workflow because the UI almost always requires the backend API to be running.
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+By default, this UI runs on port `3001`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
+- The attendee list page uses `NEXT_PUBLIC_PAGINATION_LIMIT` to determine the page size sent to the API.
+- For API details and payload shapes, rely on Swagger (`/api/docs`) exposed by the API service.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## TODO
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Implement an analytics dashboard (attendance, check-in rates, ticket sending status)
+- Improve state management for the scanner and attendee list (reduce refetch churn, improve offline/latency handling)
+
