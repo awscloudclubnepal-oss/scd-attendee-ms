@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"   # HTTP (Required for SSL verification)
+      - "443:443" # HTTPS (Where users connect)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile  # Config file mapping
+      - caddy_data:/data                  # Stores SSL certificates
+      - caddy_config:/config
+    networks:
+      - default
+    depends_on:
+      - aws-ticket-api
+
+  aws-new-postgres:
+    container_name: aws-new-postgres
+    image: postgres:15-alpine 
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - default
+    restart: unless-stopped
+
+  redis:
+    container_name: aws-ticket-redis
+    image: valkey/valkey:8.1.3-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - default
+
+  aws-ticket-api:
+    container_name: aws-ticket-api
+    image: awscloudclubtu/aws-ticket-api:latest
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - aws-new-postgres 
+    networks:
+      - default
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  pg_data:
+  caddy_data:   
+  caddy_config:
+
+networks:
+  default:

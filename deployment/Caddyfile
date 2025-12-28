@@ -1,0 +1,4 @@
+<PUBLIC_IP>.nip.io {
+    # Forward traffic to the container named 'aws-ticket-api'
+    reverse_proxy aws-ticket-api:3000
+}
