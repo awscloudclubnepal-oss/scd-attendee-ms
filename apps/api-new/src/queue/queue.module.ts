@@ -8,7 +8,6 @@ import { Attendee } from '../attendees/entities/attendee.entity';
 
 @Module({
   imports: [
-    // BullMQ connection configuration
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
@@ -16,11 +15,10 @@ import { Attendee } from '../attendees/entities/attendee.entity';
       },
     }),
     
-    // Register the email queue with rate limiting
     BullModule.registerQueue({
       name: 'email-queue',
       defaultJobOptions: {
-        attempts: 3, // Retry failed jobs 3 times
+        attempts: 3, 
         backoff: {
           type: 'exponential',
           delay: 5000, // Start with 5 second delay
@@ -30,12 +28,11 @@ import { Attendee } from '../attendees/entities/attendee.entity';
       },
     }),
     
-    // Import modules needed by processor
     TypeOrmModule.forFeature([Attendee]),
     TicketModule,
     EmailModule,
   ],
   providers: [EmailProcessor],
-  exports: [BullModule], // Export so other modules can use the queue
+  exports: [BullModule],
 })
 export class QueueModule {}
