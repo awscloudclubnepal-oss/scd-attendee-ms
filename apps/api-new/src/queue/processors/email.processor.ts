@@ -8,10 +8,10 @@ import { TicketService } from '../../ticket/ticket.service';
 import { EmailService } from '../../email/email.service';
 
 @Processor('email-queue', {
-  concurrency: 5, // Process 5 jobs concurrently
+  concurrency: 5, 
   limiter: {
-    max: 5, // process maximum 5 jobs per duration
-    duration: 1000, // sends 5 email per second
+    max: 5, 
+    duration: 1000, 
   }
 })
 export class EmailProcessor extends WorkerHost {
@@ -32,23 +32,19 @@ export class EmailProcessor extends WorkerHost {
     this.logger.log(`Processing ticket email for attendee ${attendeeId} (Job ${job.id})`);
 
     try {
-      // Fetch attendee from database
       const attendee = await this.attendeesRepo.findOneBy({ id: attendeeId });
 
       if (!attendee) {
-        this.logger.error(`❌ Attendee ${attendeeId} not found`);
+        this.logger.error(`Attendee ${attendeeId} not found`);
         throw new Error(`Attendee ${attendeeId} not found`);
       }
 
-      // Generate QR code
       this.logger.debug(`Generating QR code for attendee ${attendeeId}`);
       const qrBuffer = await this.ticketService.generateTickerQR(attendee);
 
-      // Send email using existing email service
       this.logger.debug(`Sending email to ${attendee.email}`);
       const result = await this.emailService.sendTicketMail(attendee, qrBuffer);
 
-      // Update ticket_sent status in database
       attendee.ticket_sent = true;
       await this.attendeesRepo.save(attendee);
 
